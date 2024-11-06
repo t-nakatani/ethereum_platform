@@ -1,0 +1,77 @@
+# https://github.com/sebastianrich18/Geth-and-Prysm-Docker
+services:
+  geth:
+    image: ethereum/client-go:latest
+    container_name: geth-execution-node
+    restart: unless-stopped
+    networks:
+      - eth2
+    ports:
+      - "30303:30303"
+      - "30303:30303/udp"
+      - "8545:8545"
+      - "8546:8546"
+      - "8551:8551"
+    volumes:
+      - ./ethereum-node:/root/.ethereum
+    stop_signal: SIGINT
+    stop_grace_period: 2m
+    command:
+      - --authrpc.addr
+      - "0.0.0.0"
+      - --authrpc.port
+      - "8551"
+      - --authrpc.vhosts
+      - "*"
+      - --authrpc.jwtsecret
+      - "/root/.ethereum/geth/jwtsecret"
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.api
+      - "eth,net,web3,engine"
+      - --http.vhosts=*
+      - --http.corsdomain=*
+      - --ws
+      - --ws.port
+      - "8546"
+      - --ws.origins
+      - "*"
+      - --ws.api
+      - "eth,net,web3"
+      - --ws.addr=0.0.0.0
+      - --cache=4096
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "2m"
+        max-file: "10"
+  prysm:
+    image: gcr.io/prysmaticlabs/prysm/beacon-chain:stable
+    container_name: prysm-beacon-node
+    restart: unless-stopped
+    networks:
+      - eth2
+    depends_on:
+      - geth
+    ports:
+      - "4000:4000"
+      - "12000:12000/udp"
+      - "13000:13000"
+    volumes:
+      - ./ethereum-node:/data
+    stop_signal: SIGINT
+    stop_grace_period: 2m
+    command:
+      - --datadir=/data
+      - --rpc-host=0.0.0.0
+      - --monitoring-host=0.0.0.0
+      - --execution-endpoint=http://geth:8551
+      - --jwt-secret=/data/geth/jwtsecret
+      - --suggested-fee-recipient=0xe2167e7E71A985962BaB25482cFe3e8ba6B2BCaB
+      - --accept-terms-of-use
+      # - --p2p-host-ip=<HOST-IP-HERE>
+      - --checkpoint-sync-url=https://beaconstate.info
+      - --genesis-beacon-api-url=https://beaconstate.info
+networks:
+  eth2:
+    driver: bridge
