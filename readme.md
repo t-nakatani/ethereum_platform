@@ -1,9 +1,21 @@
+# geth
 
+## geth syncing
 
+同期が終了すると次のように、`eth_syncing`が`false`になる。
 ```
-curl 127.0.0.1:8545 -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_syncing","params": [],"id":1}'
+curl 127.0.0.1:8545 -X POST -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_syncing","params": [],"id":1}'
+
+{"jsonrpc":"2.0","id":1,"result":false}
+```
+
+同期が終わるとwebsocketで接続できる、接続できない場合は同期が終わっていないかwsオプションがついていない
+wscatは、npmからinstall
+```
+wscat -c ws://127.0.0.1:8546
+{"jsonrpc":"2.0", "id": 1, "method": "eth_subscribe", "params": ["newPendingTransactions"]}
+
+Connected (press CTRL+C to quit)
 ```
 
 geth logs
